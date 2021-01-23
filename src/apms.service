@@ -1,0 +1,10 @@
+ [Unit]
+ Description=Manage Access Points
+ After=multi-user.target
+
+ [Service]
+ Type=idle
+ ExecStart=/home/pi/apms
+
+ [Install]
+ WantedBy=multi-user.target
