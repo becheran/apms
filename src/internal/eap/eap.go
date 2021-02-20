@@ -64,8 +64,8 @@ func (eap *EAP) login() {
 		panic(err.Error())
 	}
 
-	loginUrl := fmt.Sprintf("%s/data/login.json ", eap.url)
-	resp, err := eap.post(loginUrl, "operation=read")
+	loginURL := fmt.Sprintf("%s/data/login.json ", eap.url)
+	resp, err := eap.post(loginURL, "operation=read")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -75,7 +75,10 @@ func (eap *EAP) login() {
 }
 
 type loginData struct {
+	// Result of led change
 	Enabled *bool `json:"enable"`
+	// Result of wifi change (either "on" or "off")
+	Status *string `json:"status"`
 }
 
 func (ld *loginData) UnmarshalJSON(b []byte) error {
@@ -98,7 +101,7 @@ func (ld *loginData) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-type loginResult struct {
+type resultPayload struct {
 	Error   int       `json:"error"`
 	Success bool      `json:"success"`
 	Data    loginData `json:"data"`
@@ -149,16 +152,31 @@ func (eap *EAP) mode(mode mode) (isEnabled bool) {
 		case enable:
 			statusMode = "on"
 		}
-		wifiUrl := fmt.Sprintf("%s/data/wireless.basic.json", eap.url)
+		wifiURL := fmt.Sprintf("%s/data/wireless.basic.json", eap.url)
 		// ID 0: 2.4 GHz
 		// ID 1: 5.0 GHz
-		for radioId := 0; radioId < 2; radioId++ {
-			payload := fmt.Sprintf("operation=write&wireless-bset-status=%s&radioID=%d", statusMode, radioId)
-			eap.postWithLoginRetry(wifiUrl, payload)
+		for radioID := 0; radioID < 2; radioID++ {
+			request := func() (success bool) {
+				payload := fmt.Sprintf("operation=write&wireless-bset-status=%s&radioID=%d", statusMode, radioID)
+				loginRes := eap.postWithLoginRetry(wifiURL, payload)
+				var result loginData
+				json.Unmarshal([]byte(loginRes), &result)
+				if result.Status == nil {
+					return false
+				}
+				return *result.Status == statusMode
+			}
+			for tries := 0; tries < 5; tries++ {
+				fmt.Printf("Send req %d/5\n", tries+1)
+				success := request()
+				if success {
+					break
+				}
+			}
 		}
 	}
 
-	ledUrl := fmt.Sprintf("%s/data/ledctrl.json", eap.url)
+	ledURL := fmt.Sprintf("%s/data/ledctrl.json", eap.url)
 	var payload string
 	switch mode {
 	case enable:
@@ -168,10 +186,10 @@ func (eap *EAP) mode(mode mode) (isEnabled bool) {
 	case read:
 		payload = "operation=read"
 	}
-	body := eap.postWithLoginRetry(ledUrl, payload)
+	body := eap.postWithLoginRetry(ledURL, payload)
 	fmt.Println(body)
 
-	var result loginResult
+	var result resultPayload
 	json.Unmarshal([]byte(body), &result)
 
 	if result.Data.Enabled == nil {
