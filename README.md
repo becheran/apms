@@ -22,6 +22,8 @@ Run the following command once on the *Raspberry Pi* to register the service:
 ``` sh
 sudo cp apms.service /lib/systemd/system/apms.service
 sudo chmod 644 /lib/systemd/system/apms.service
+systemctl start apms
+systemctl enable apms
 sudo reboot 0
 ```
 
