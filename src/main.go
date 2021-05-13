@@ -49,10 +49,10 @@ func main() {
 	defer rpio.Close()
 
 	// Pinout https://de.pinout.xyz/pinout/pin15_gpio22
-	go Manage("192.168.0.100", 2, 3)
-	go Manage("192.168.0.101", 4, 17)
-	go Manage("192.168.0.102", 14, 15)
-	go Manage("192.168.0.103", 27, 22)
+	go Manage("192.168.0.100", 4, 17)
+	go Manage("192.168.0.101", 2, 3)
+	go Manage("192.168.0.102", 18, 23)
+	go Manage("192.168.0.103", 14, 15)
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
