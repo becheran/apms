@@ -116,30 +116,34 @@ const (
 )
 
 func (eap *EAP) postWithLoginRetry(url string, payload string) (body string) {
-	req := func() (string, error) {
+	req := func() (result string, success bool) {
 		resp, err := eap.post(url, payload)
-		if err == nil {
-			defer resp.Body.Close()
-			b, _ := ioutil.ReadAll(resp.Body)
-			if strings.Contains(string(b), `"data"`) {
-				return string(b), nil
-			}
+		if err != nil {
+			fmt.Printf("Failed to send %s %s. Err: %s", url, payload, err)
+			return "", false
 		}
-		return "", fmt.Errorf("Invalid response")
+		b, _ := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if !strings.Contains(string(b), `"data"`) {
+			fmt.Printf("Expected body %s to contain 'data' field.\n", b)
+			return "", false
+		}
+		return string(b), true
 	}
 
-	if res, err := req(); err == nil {
+	if res, ok := req(); ok {
 		return res
 	}
 	eap.login()
 	// Try another x times
-	for i := 0; i < 5; i++ {
-		if res, err := req(); err == nil {
+	const repeat = 5
+	for i := 0; i < repeat; i++ {
+		if res, ok := req(); ok {
 			return res
 		}
 		time.Sleep(time.Second / 2)
 	}
-	fmt.Println("Unexpected result after n requests")
+	fmt.Printf("Unexpected result after %d requests\n", repeat)
 	return ""
 }
 
