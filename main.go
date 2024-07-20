@@ -9,6 +9,7 @@ import (
 	"github.com/becheran/apms/internal/config"
 	"github.com/becheran/apms/internal/eap"
 	"github.com/becheran/apms/internal/gpio"
+	"github.com/becheran/apms/internal/timehelper"
 	"github.com/stianeikeland/go-rpio"
 )
 
@@ -43,9 +44,7 @@ func Manage(ip string, ledPin int, buttonPin int) {
 
 func main() {
 	fmt.Println("Eap Manager")
-	if err := rpio.Open(); err != nil {
-		panic(err)
-	}
+	timehelper.RetryTillNill(rpio.Open)
 	defer rpio.Close()
 
 	// Pinout https://de.pinout.xyz/pinout/pin15_gpio22

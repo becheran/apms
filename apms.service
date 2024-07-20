@@ -1,0 +1,11 @@
+[Unit]
+Description=Manage Access Points
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=idle
+ExecStart=/home/pi/apms
+
+[Install]
+WantedBy=multi-user.target

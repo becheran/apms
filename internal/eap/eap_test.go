@@ -10,7 +10,7 @@ import (
 )
 
 func TestConnect(t *testing.T) {
-	eap_3 := eap.NewEAP("192.168.0.102", config.User, config.Password)
+	eap_3 := eap.NewEAP("192.168.0.100", config.User, config.Password)
 	eap_3.Disable()
 	fmt.Println(eap_3.IsEnabled())
 	time.Sleep(time.Second * 5)

@@ -6,11 +6,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"strings"
 	"time"
+
+	"github.com/becheran/apms/internal/timehelper"
 )
 
 type EAP struct {
@@ -21,11 +23,6 @@ type EAP struct {
 
 // NewEAP create a new Access Point Object
 func NewEAP(ip, user, pw string) *EAP {
-	config := &tls.Config{
-		InsecureSkipVerify: true,
-	}
-	tr := &http.Transport{TLSClientConfig: config}
-
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		panic(err.Error())
@@ -36,8 +33,10 @@ func NewEAP(ip, user, pw string) *EAP {
 	eap := EAP{
 		url: fmt.Sprintf("https://%s", ip),
 		client: &http.Client{
-			Transport: tr,
-			Jar:       jar,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			Jar: jar,
 		},
 		creds: fmt.Sprintf("username=%s&password=%X", user, hashedPassword),
 	}
@@ -59,18 +58,19 @@ func (eap *EAP) post(url string, payload string) (resp *http.Response, err error
 }
 
 func (eap *EAP) login() {
-	_, err := eap.post(eap.url, eap.creds)
-	if err != nil {
-		panic(err.Error())
-	}
+	timehelper.RetryTillNill(func() error {
+		_, err := eap.post(eap.url, eap.creds)
+		return err
+	})
 
-	loginURL := fmt.Sprintf("%s/data/login.json ", eap.url)
-	resp, err := eap.post(loginURL, "operation=read")
-	if err != nil {
-		panic(err.Error())
-	}
+	var resp *http.Response
+	timehelper.RetryTillNill(func() (err error) {
+		loginURL := fmt.Sprintf("%s/data/login.json ", eap.url)
+		resp, err = eap.post(loginURL, "operation=read")
+		return err
+	})
 	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	fmt.Println(string(body))
 }
 
@@ -122,7 +122,7 @@ func (eap *EAP) postWithLoginRetry(url string, payload string) (body string) {
 			fmt.Printf("Failed to send %s %s. Err: %s", url, payload, err)
 			return "", false
 		}
-		b, _ := ioutil.ReadAll(resp.Body)
+		b, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if !strings.Contains(string(b), `"data"`) {
 			fmt.Printf("Expected body %s to contain 'data' field.\n", b)
