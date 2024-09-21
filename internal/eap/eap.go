@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/becheran/apms/internal/timehelper"
+	"github.com/becheran/apms/internal/helper"
 )
 
 type EAP struct {
@@ -58,13 +58,13 @@ func (eap *EAP) post(url string, payload string) (resp *http.Response, err error
 }
 
 func (eap *EAP) login() {
-	timehelper.RetryTillNill(func() error {
+	helper.Assert(func() error {
 		_, err := eap.post(eap.url, eap.creds)
 		return err
 	})
 
 	var resp *http.Response
-	timehelper.RetryTillNill(func() (err error) {
+	helper.Assert(func() (err error) {
 		loginURL := fmt.Sprintf("%s/data/login.json ", eap.url)
 		resp, err = eap.post(loginURL, "operation=read")
 		return err

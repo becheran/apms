@@ -6,6 +6,8 @@ After=network-online.target
 [Service]
 Type=idle
 ExecStart=/home/pi/apms
+Restart=on-failure
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
