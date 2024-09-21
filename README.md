@@ -13,7 +13,7 @@ Button based power control for *TP-Link EAP225* devices using an *Raspberry Pi*.
 
 ## Setup
 
-Enter your Access Point credentials in the [config file](./internal/config/config.go).
+Enter your Access Point credentials as env variables or in a `.env` file next to the executable.
 
 Edit the [build script](./build.sh) and add the IP of your Access Point. Run the script to build and upload the *apms* binary.
 

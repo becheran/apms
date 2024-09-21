@@ -8,6 +8,7 @@ Type=idle
 ExecStart=/home/pi/apms
 Restart=on-failure
 RestartSec=5s
+WorkingDirectory=/home/pi/
 
 [Install]
 WantedBy=multi-user.target

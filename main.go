@@ -6,18 +6,25 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/becheran/apms/internal/config"
 	"github.com/becheran/apms/internal/eap"
 	"github.com/becheran/apms/internal/gpio"
 	helper "github.com/becheran/apms/internal/helper"
+	"github.com/joho/godotenv"
 	"github.com/stianeikeland/go-rpio"
 )
 
 func Manage(ip string, ledPin int, buttonPin int) {
-	led := gpio.NewLed(ledPin)
+	if err := godotenv.Load(); err != nil {
+		fmt.Printf("Error loading .env file. %s", err)
+	}
+	user := os.Getenv("APMS_USER")
+	password := os.Getenv("APMS_PASSWORD")
 
-	eap3 := eap.NewEAP(ip, config.User, config.Password)
+	fmt.Printf("Start APMS for user: %s\n", user)
+
+	eap3 := eap.NewEAP(ip, user, password)
 	isEnabledEap3 := eap3.IsEnabled()
+	led := gpio.NewLed(ledPin)
 	if isEnabledEap3 {
 		led.On()
 	} else {
